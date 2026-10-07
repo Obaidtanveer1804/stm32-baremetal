@@ -1,6 +1,6 @@
-PROJ_NAME =test
+PROJ_NAME =led
 CC=arm-none-eabi-gcc
-SRCS=uart_f1.o main_uart.o spi_f1.o syscalls_template.o
+SRCS=uart_f1.o main_led.o spi_f1.o syscalls_template.o
 REPERTOIRE ?= $(HOME)/umlp-elise/microcontrollers/libopencm3/libopencm3
 # PATH:=/home/jmfriedt/enseignement/sqnx/platforms/stm32/qemu/qemu_stm32/arm-softmmu/:$(PATH)
 
@@ -18,6 +18,9 @@ $(PROJ_NAME).bin: $(PROJ_NAME).elf
 
 $(PROJ_NAME).elf: $(SRCS)
 	$(CC) -o $(PROJ_NAME).elf $(SRCS) $(LDFLAGS)
+
+main_led.o: main_led.c
+	$(CC) $(DRAPEAU) -c main_led.c
 
 uart_f1.o: uart_f1.c
 	$(CC) $(DRAPEAU) -c uart_f1.c
