@@ -1,14 +1,13 @@
+#include <libopencm3/stm32/gpio.h>
 #include "uart.h"
 
 int main(){
 	clock_setup();
 	init_gpio();
-	led_set(1);
-	led_clr(0);
 
 	while(1){
-		led_set(0);led_clr(1);delay(800000);
-		led_set(1);led_clr(0);delay(800000);
-}
-return 0;
+		gpio_toggle(GPIOC, GPIO1); // LEDs on PC1/PC2 (STM32F103 board)
+		delay(800000);
+	}
+	return 0;
 }

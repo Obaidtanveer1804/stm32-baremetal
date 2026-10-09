@@ -1,12 +1,15 @@
-PROJ_NAME =led
+# target: STM32F103 custom board (FTDI-programmed). Select program: make PROG=led | make PROG=uart
+PROG ?= led
+PROJ_NAME = $(PROG)
+SERIAL ?= /dev/ttyUSB0
 CC=arm-none-eabi-gcc
-SRCS=uart_f1.o main_led.o spi_f1.o syscalls_template.o
+SRCS=uart_f1.o main_$(PROG).o spi_f1.o syscalls_template.o
 REPERTOIRE ?= $(HOME)/umlp-elise/microcontrollers/libopencm3/libopencm3
 # PATH:=/home/jmfriedt/enseignement/sqnx/platforms/stm32/qemu/qemu_stm32/arm-softmmu/:$(PATH)
 
 COMMONS = -mthumb -mcpu=cortex-m3
 DRAPEAU =-g -Wall
-DRAPEAU +=$(COMMONS) -DSTM32F1 -DSTM32F10X_LD_VL
+DRAPEAU +=$(COMMONS) -DSTM32F1
 DRAPEAU +=-I$(REPERTOIRE)/include
 LDFLAGS = $(COMMONS) -g -L$(REPERTOIRE)/lib -lm --static -Tstm32f1.ld -nostartfiles
 LDFLAGS +=-lopencm3_stm32f1 -lc -lnosys
@@ -50,7 +53,10 @@ clean:
 	rm *.o $(PROJ_NAME).elf $(PROJ_NAME).bin
 
 flash: $(PROJ_NAME).bin
-	stm32flash.sh -w $(PROJ_NAME).bin /dev/ttyUSB0
+	ftdi_cpu_prog -r 2 -b 1 -d $(SERIAL) -m 0
+	sleep 2
+	stm32flash -w $(PROJ_NAME).bin -v $(SERIAL)
+	ftdi_cpu_prog -r 2 -b 1 -d $(SERIAL) -m 1
 	# st-flash write $(PROJ_NAME).bin 0x8000000
 
 monqemu: $(PROJ_NAME).bin
