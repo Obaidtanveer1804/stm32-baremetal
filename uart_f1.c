@@ -1,3 +1,4 @@
+#include <stdarg.h>
 #include <libopencm3/stm32/rcc.h>
 #include <libopencm3/stm32/gpio.h>
 #include <libopencm3/stm32/usart.h>
@@ -23,17 +24,46 @@ void my_putchar(unsigned char ch)
 //	usart_send_blocking(USART2, ch);
 }
 
-void my_puts(char *buf)
+static void put_number(unsigned int n, unsigned int base)
 {
-	int i=0; // nbre de caractère initialisé à 0
-	char tmp=0; // caractere actuels
-	do
-	{
-		tmp=buf[i];
-		i++;
-		my_putchar(tmp);
+	char buf[11];
+	int i = 0;
+	do {
+		buf[i++] = "0123456789ABCDEF"[n % base];
+		n /= base;
+	} while (n);
+	while (i--)
+		my_putchar(buf[i]);
+}
+
+void my_puts(char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	for (; *fmt; fmt++) {
+		if (*fmt != '%') {
+			my_putchar(*fmt);
+			continue;
+		}
+		switch (*++fmt) {
+		case 'd': {
+			int n = va_arg(args, int);
+			if (n < 0) {
+				my_putchar('-');
+				n = -n;
+			}
+			put_number(n, 10);
+			break;
+		}
+		case 'u': put_number(va_arg(args, unsigned int), 10); break;
+		case 'x': put_number(va_arg(args, unsigned int), 16); break;
+		case 'c': my_putchar(va_arg(args, int)); break;
+		case 's': my_puts(va_arg(args, char *)); break;
+		case '%': my_putchar('%'); break;
+		default:  my_putchar('%'); my_putchar(*fmt); break;
+		}
 	}
-	while(tmp !='\0'); // on boucle tant qu'on n'est pas arrivé à l'\0
+	va_end(args);
 }
 
 void delay(unsigned int delay)
