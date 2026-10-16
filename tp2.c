@@ -18,7 +18,7 @@ int counter(int count){
 	return count;
 }
 
-void tp2_task5_count_hex(int counter)
+void tp2_task6_count_dec(int counter)
 {
 	my_puts("binary counter: ");
 	for(uint8_t bit_index = BCOUNTER_BIT_COUNT; bit_index > 0U; bit_index--){
@@ -27,7 +27,7 @@ void tp2_task5_count_hex(int counter)
 	my_puts("\r\n");
 }
 
-void tp2_task6_count_dec(int counter)
+void tp2_task5_count_hex(int counter)
 {
 	my_puts("hex counter : 0x");
         my_putchar(hex_digits[(counter >> HEX_NIBBLE_BITS) & HEX_NIBBLE_MASK]);
