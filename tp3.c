@@ -10,8 +10,8 @@ static const char hex_digits[] = "0123456789ABCDEF";
 #define AD_DIVISOR (546875U)
 #define AD_SHIFT (21U)
 #define AD_MASK_14BITS (0x3FFFU)
-#define AD_FREQ0_ADDR (0x4000U)  /* Table 10: DB15,DB14 = 01 -> FREQ0 REG */
-#define AD_CONTROL_B28 (0x2000U) /* Table 6 / 11: DB13 B28 = 1 -> two consecutive writes */
+#define AD_FREQ0_ADDR (0x4000U)
+#define AD_CONTROL_B28 (0x2000U)
 
 static void print_hex16(uint16_t word)
 {
