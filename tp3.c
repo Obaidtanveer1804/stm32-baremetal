@@ -9,6 +9,8 @@ static const char hex_digits[] = "0123456789ABCDEF";
 
 #define AD_DIVISOR (546875U)
 #define AD_SHIFT (21U)
+#define AD_SHIFT_A (10U)
+#define AD_SHIFT_B (11U)
 #define AD_MASK_14BITS (0x3FFFU)
 #define AD_FREQ0_ADDR (0x4000U)
 #define AD_CONTROL_B28 (0x2000U)
@@ -23,18 +25,11 @@ static void print_hex16(uint16_t word)
 
 static uint32_t ad_freqreg(uint32_t req_freq)
 {
-	uint32_t result = 0U;
-	uint32_t remainder = req_freq % AD_DIVISOR;
+	uint32_t whole = req_freq / AD_DIVISOR;
+	uint32_t step1 = (req_freq % AD_DIVISOR) << AD_SHIFT_A;
+	uint32_t step2 = (step1 % AD_DIVISOR) << AD_SHIFT_B;
 
-	for(uint8_t bit_index = 0U; bit_index < AD_SHIFT; bit_index++){
-		remainder <<= 1;
-		result <<= 1;
-		if(remainder >= AD_DIVISOR){
-			remainder -= AD_DIVISOR;
-			result |= 1U;
-		}
-	}
-	return result + ((req_freq / AD_DIVISOR) << AD_SHIFT);
+	return (whole << AD_SHIFT) + ((step1 / AD_DIVISOR) << AD_SHIFT_B) + (step2 / AD_DIVISOR);
 }
 
 int ad_freq(int req_freq){
