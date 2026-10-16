@@ -13,7 +13,7 @@ int main(){
 	while(1){
 		blink_led();
 
-
+		ad_freq(4000000);
 // 		TP2 here,
 //		icounter = counter(icounter);
 //		tp2_task5_count_hex(icounter);
