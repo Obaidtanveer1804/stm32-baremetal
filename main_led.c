@@ -12,12 +12,10 @@ int main(){
 	
 	while(1){
 		blink_led();
-
 		ad_freq(4000000);
-// 		TP2 here,
-//		icounter = counter(icounter);
-//		tp2_task5_count_hex(icounter);
-//	        tp2_task6_count_dec(icounter);
+ 	//	TP2 here,
+//		icounter = counter(icounter); tp2_task5_count_hex(icounter); 
+//		tp2_task6_count_dec(icounter);
 		delay(800000);
 	}
 		

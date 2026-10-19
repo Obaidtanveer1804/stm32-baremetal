@@ -1,0 +1,149 @@
+# ---------------------------------------------------------------------------
+# Makefile.elise - the TP Makefile plus the F100 board and the ELISE
+# library in lib/. Your own Makefile is left as it is; use this one with -f
+# (or copy it over Makefile once you are happy with it).
+#
+# TP programs (default: main_led.c on the F103, FTDI flashing):
+#   make -f Makefile.elise                     build led.bin
+#   make -f Makefile.elise flash               flash it
+#   make -f Makefile.elise PROG=uart flash     main_uart.c
+#   make -f Makefile.elise BOARD=f100 flash    same program on the VL-Discovery
+#
+# Your own main_<PROG>.c using the library (hal_*, io_printf, drivers...):
+#   make -f Makefile.elise PROG=hello USE_LIB=1 flash
+#
+# Ready-made library apps (lib/apps/*.c):
+#   make -f Makefile.elise lib-flash APP=cli   build + flash for $(BOARD)
+#   make -f Makefile.elise lib-pc APP=cli      run it on the PC, no board needed
+#   make -f Makefile.elise lib-apps            list them
+#
+# The TP programs on the PC: cd lib/tp_pc && make run
+#
+# BOARD  : f103 (custom board, default) | f100 (VL-Discovery)
+# FLASHER: ftdi (default f103) | stlink (default f100) | serial (BOOT0 by hand)
+# ---------------------------------------------------------------------------
+PROG ?= led
+PROJ_NAME = $(PROG)
+SERIAL ?= /dev/ttyUSB0
+CC=arm-none-eabi-gcc
+REPERTOIRE ?= $(HOME)/umlp-elise/microcontrollers/libopencm3/libopencm3
+# PATH:=/home/jmfriedt/enseignement/sqnx/platforms/stm32/qemu/qemu_stm32/arm-softmmu/:$(PATH)
+
+BOARD   ?= f103
+USE_LIB ?= 0
+LIB_DIR := lib
+
+ifeq ($(BOARD),f103)
+    CHIP_DEF  :=
+    LIB_BOARD := BOARD_F103_CUSTOM
+    LIB_LD    := $(LIB_DIR)/ld/stm32f103rb.ld
+    FLASHER   ?= ftdi
+else ifeq ($(BOARD),f100)
+    CHIP_DEF  := -DSTM32F10X_LD_VL
+    LIB_BOARD := BOARD_VLDISCOVERY
+    LIB_LD    := $(LIB_DIR)/ld/stm32f100rb.ld
+    FLASHER   ?= stlink
+else
+    $(error unknown BOARD '$(BOARD)': use f103 or f100)
+endif
+
+COMMONS = -mthumb -mcpu=cortex-m3
+DRAPEAU =-g -Wall
+DRAPEAU +=$(COMMONS) -DSTM32F1 $(CHIP_DEF)
+DRAPEAU +=-I$(REPERTOIRE)/include
+LDSCRIPT = stm32f1.ld
+
+ifeq ($(USE_LIB),1)
+    # The TP files stay in: my_puts() and hal_* can be mixed. The library
+    # is an archive, so only the modules main_$(PROG).c uses are linked.
+    LIB_A    := $(LIB_DIR)/build/$(BOARD)/libelise.a
+    DRAPEAU  += -D$(LIB_BOARD) $(addprefix -I$(LIB_DIR)/,core hal drivers cli port/f1)
+    # the library's linker script keeps the last 4 KiB of flash for hal_flash/config
+    LDSCRIPT  = $(LIB_LD)
+    LIBFLAGS := -Wl,--gc-sections
+endif
+
+# every tpN.c (tp2.c, tp3.c...) is picked up: no list to keep in sync
+TP_OBJS = $(patsubst %.c,%.o,$(wildcard tp*.c)) cgpio.o
+SRCS=uart_f1.o main_$(PROG).o $(TP_OBJS) spi_f1.o syscalls_template.o
+LDFLAGS = $(COMMONS) -g -L$(REPERTOIRE)/lib -lm --static -T$(LDSCRIPT) -nostartfiles $(LIBFLAGS)
+LDFLAGS +=$(LIB_A) -lopencm3_stm32f1 -lc -lnosys
+
+.PHONY: FORCE all clean flash lib lib-build lib-flash lib-pc lib-apps monqemu qemu qemu-gdb
+
+all:$(PROJ_NAME).bin
+
+$(PROJ_NAME).bin: $(PROJ_NAME).elf
+	arm-none-eabi-objcopy -Obinary $(PROJ_NAME).elf $(PROJ_NAME).bin
+
+$(PROJ_NAME).elf: $(SRCS) $(LIB_A)
+	$(CC) -o $(PROJ_NAME).elf $(SRCS) $(LDFLAGS)
+
+# every main_xxx.c / TP file: one rule instead of one per file
+%.o: %.c
+	$(CC) $(DRAPEAU) -c $<
+
+FORCE:
+
+tp%.o: tp%.c tp%.h
+	$(CC) $(DRAPEAU) -c $<
+
+cgpio.o: cgpio.h
+
+racine.o: racine/racine.c
+	$(CC) $(DRAPEAU) -c racine/racine.c -o racine.o
+
+fixed.o: racine/fixed.c
+	$(CC) $(DRAPEAU) -c racine/fixed.c -o fixed.o
+
+# the library archive, built with the library's own Makefile and flags
+# (always asked: the sub-make only recompiles what changed)
+lib $(LIB_DIR)/build/$(BOARD)/libelise.a: FORCE
+	$(MAKE) -C $(LIB_DIR) TARGET=$(BOARD) OPENCM3_DIR=$(REPERTOIRE) lib
+
+clean:
+	rm -f *.o *.elf *.bin
+	$(MAKE) -C $(LIB_DIR) clean
+
+flash: $(PROJ_NAME).bin
+ifeq ($(FLASHER),ftdi)
+	ftdi_cpu_prog -r 2 -b 1 -d $(SERIAL) -m 0
+	sleep 2
+	stm32flash -w $(PROJ_NAME).bin -v $(SERIAL)
+	ftdi_cpu_prog -r 2 -b 1 -d $(SERIAL) -m 1
+else ifeq ($(FLASHER),serial)
+	stm32flash -w $(PROJ_NAME).bin -v -g 0x0 $(SERIAL)
+else ifeq ($(FLASHER),stlink)
+	st-flash --reset write $(PROJ_NAME).bin 0x8000000
+else
+	$(error unknown FLASHER '$(FLASHER)': use ftdi, stlink or serial)
+endif
+
+# ------------------------- library apps (lib/apps) -------------------------
+APP ?= cli
+LIB_MAKE = $(MAKE) -C $(LIB_DIR) TARGET=$(BOARD) APP=$(APP) OPENCM3_DIR=$(REPERTOIRE) \
+           SERIAL=$(SERIAL) FLASHER=$(FLASHER)
+
+lib-build:
+	$(LIB_MAKE)
+
+lib-flash:
+	$(LIB_MAKE) flash
+
+lib-pc:
+	$(MAKE) -C $(LIB_DIR) TARGET=pc APP=$(APP) run
+
+lib-apps:
+	@$(MAKE) -s -C $(LIB_DIR) apps
+
+# --------------------------------- qemu ------------------------------------
+monqemu: $(PROJ_NAME).bin
+	which qemu-system-arm
+	qemu-system-arm -M stm32-p103 -serial stdio -serial stdio -kernel $(PROJ_NAME).bin -nographic
+
+qemu-gdb: $(PROJ_NAME).bin
+	qemu-system-arm -M stm32vldiscovery -s -S -serial stdio -kernel $(PROJ_NAME).bin
+#	qemu-system-arm -M stm32-p103 -s -serial stdio -kernel $(PROJ_NAME).bin
+
+qemu: $(PROJ_NAME).bin
+	qemu-system-arm -M stm32vldiscovery -serial stdio -kernel $(PROJ_NAME).bin
