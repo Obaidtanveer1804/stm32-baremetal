@@ -3,7 +3,7 @@
 #include "tp3.h"
 #include "cgpio.h"
 #include "newtonsq.h"
-
+#include "tp2.h"
 int main(){
 	clock_setup();
 	init_gpio();
@@ -28,8 +28,8 @@ int main(){
 
 //---------------------------------------------------TP2 here;----------------------------------------------------------------------------------------------------
 
-//		icounter = counter(icounter); tp2_task5_count_hex(icounter); 
-//		tp2_task6_count_dec(icounter);
+		icounter = counter(icounter); tp2_task5_count_hex(icounter); 
+		tp2_task6_count_dec(icounter);
 
 //-----------------------------------------------------------------------------------------------------------------------
 
