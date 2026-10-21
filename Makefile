@@ -3,7 +3,7 @@ PROG ?= led
 PROJ_NAME = $(PROG)
 SERIAL ?= /dev/ttyUSB0
 CC=arm-none-eabi-gcc
-SRCS=uart_f1.o main_$(PROG).o tp2.o tp3.o cgpio.o spi_f1.o syscalls_template.o
+SRCS=uart_f1.o main_$(PROG).o tp2.o tp3.o cgpio.o newtonsq.o spi_f1.o syscalls_template.o
 REPERTOIRE ?= $(HOME)/umlp-elise/microcontrollers/libopencm3/libopencm3
 # PATH:=/home/jmfriedt/enseignement/sqnx/platforms/stm32/qemu/qemu_stm32/arm-softmmu/:$(PATH)
 
@@ -27,6 +27,9 @@ main_led.o: main_led.c
 
 uart_f1.o: uart_f1.c
 	$(CC) $(DRAPEAU) -c uart_f1.c
+
+newtonsq.o: newtonsq.c
+	$(CC) $(DRAPEAU) -c newtonsq.c
 
 spi_f1.o: spi_f1.c
 	$(CC) $(DRAPEAU) -c spi_f1.c
