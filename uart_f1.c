@@ -4,17 +4,18 @@
 #include <libopencm3/stm32/usart.h>
 #include <libopencm3/stm32/timer.h>
 #include <libopencm3/stm32/flash.h> // definitions du timer
+#include "tpboard.h"
 
 #define usart1
 
 void core_clock_setup(void)
 {
-#ifdef STM32F10X_LD_VL
- rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_24MHZ]);
-// rcc_clock_setup_in_hse_8mhz_out_24mhz();  // STM32F100 discovery
+#ifdef QEMU
+ // qemu does not model the PLL/RCC: waiting for PLLRDY would hang, keep the reset clock
+#elif defined(TP_CLOCK_24MHZ)
+ rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_24MHZ]);  // STM32F100 discovery
 #else
-// rcc_clock_setup_in_hse_8mhz_out_72mhz();  // STM32F103 obsolete
- rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);
+ rcc_clock_setup_pll(&rcc_hse_configs[RCC_CLOCK_HSE8_72MHZ]);  // STM32F103
 #endif
 }
 
@@ -77,11 +78,7 @@ void delay(unsigned int delay)
 void init_gpio(void)
 {
 	/* Setup GPIO for LED. */
-#ifdef STM32F10X_LD_VL
- gpio_set_mode(GPIOC,GPIO_MODE_OUTPUT_2_MHZ,GPIO_CNF_OUTPUT_PUSHPULL,GPIO7|GPIO8|GPIO9);
-#else
- gpio_set_mode(GPIOC,GPIO_MODE_OUTPUT_2_MHZ,GPIO_CNF_OUTPUT_PUSHPULL,GPIO1|GPIO2);
-#endif
+ gpio_set_mode(GPIOC,GPIO_MODE_OUTPUT_2_MHZ,GPIO_CNF_OUTPUT_PUSHPULL,TP_LED_INIT);
 
 #ifdef usart1
   gpio_set_mode(GPIOA, GPIO_MODE_OUTPUT_50_MHZ,
@@ -115,36 +112,36 @@ void clock_setup(void)
 
 void led_set(int msk)
 {
-#ifdef STM32F10X_LD_VL
+#ifdef TP_LED_SELECT
 	switch (msk)
-         {case 0: gpio_set(GPIOC, GPIO8);break; // blue
-          case 1: gpio_set(GPIOC,GPIO9); break; // green
-          case 3: gpio_set(GPIOC,GPIO7); break;
-          default:gpio_set(GPIOC, GPIO8|GPIO9);
+         {case 0: gpio_set(GPIOC, TP_LED_0);break; // blue
+          case 1: gpio_set(GPIOC, TP_LED_1); break; // green
+          case 3: gpio_set(GPIOC, TP_LED_3); break;
+          default:gpio_set(GPIOC, TP_LED_ALL);
          }
 #else
 #ifdef netwk
 	gpio_set(GPIOA, msk);
 #else
-	gpio_set(GPIOC, GPIO1|GPIO2);
+	gpio_set(GPIOC, TP_LED_ALL);
 #endif
 #endif
 }
 
 void led_clr(int msk)
 {
-#ifdef STM32F10X_LD_VL
+#ifdef TP_LED_SELECT
 	switch (msk)
-         {case 0: gpio_clear(GPIOC, GPIO8);break; // blue
-          case 1: gpio_clear(GPIOC,GPIO9); break; // green
-          case 3: gpio_clear(GPIOC,GPIO7); break;
-          default:gpio_clear(GPIOC, GPIO8|GPIO9);
+         {case 0: gpio_clear(GPIOC, TP_LED_0);break; // blue
+          case 1: gpio_clear(GPIOC, TP_LED_1); break; // green
+          case 3: gpio_clear(GPIOC, TP_LED_3); break;
+          default:gpio_clear(GPIOC, TP_LED_ALL);
          }
 #else
 #ifdef netwk
 	gpio_clear(GPIOA, msk);
 #else
-	gpio_clear(GPIOC, GPIO1|GPIO2);
+	gpio_clear(GPIOC, TP_LED_ALL);
 #endif
 #endif
 }
