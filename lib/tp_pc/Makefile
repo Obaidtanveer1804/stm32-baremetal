@@ -16,7 +16,7 @@
 PROG    ?= led
 TP_DIR  ?= ../..
 # default: every tpN.c of the TP folder (tp2.c, tp3.c...) and cgpio.c
-TP_SRCS ?= $(notdir $(wildcard $(TP_DIR)/tp*.c $(TP_DIR)/cgpio.c))
+TP_SRCS ?= $(notdir $(wildcard $(TP_DIR)/tp*.c $(TP_DIR)/cgpio.c $(TP_DIR)/fact.c))
 QUIET   ?= 0
 LIB_DIR := ..
 
@@ -27,7 +27,7 @@ LIB_A   := $(LIB_DIR)/build/pc/libelise.a
 CC      := gcc
 # gnu17: the TP headers use old-style "void f();" prototypes (C23 would
 # read them as "no arguments"), exactly like arm-none-eabi-gcc does.
-TP_FLAGS  := -std=gnu17 -g -O1 -Wall -DSTM32F1 -Iinclude -I$(TP_DIR)
+TP_FLAGS  := -std=gnu17 -g -O1 -Wall -DSTM32F1 -DBOARD_PC -Iinclude -I$(TP_DIR)
 LIB_FLAGS := -DBOARD_PC $(addprefix -I$(LIB_DIR)/,core hal drivers cli port/pc)
 ifeq ($(QUIET),1)
     LIB_FLAGS += -DTP_PC_QUIET
