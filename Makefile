@@ -8,7 +8,7 @@ BOARD ?= f103
 PROJ_NAME = $(PROG)
 SERIAL ?= /dev/ttyUSB0
 CC=arm-none-eabi-gcc
-SRCS=uart_f1.o main_$(PROG).o tp2.o tp3.o cgpio.o newtonsq.o fact.o spi_f1.o syscalls_template.o
+SRCS=uart_f1.o main_$(PROG).o tp2.o tp3.o cgpio.o newtonsq.o fixpoint.o fact.o spi_f1.o syscalls_template.o
 REPERTOIRE ?= $(HOME)/umlp-elise/microcontrollers/libopencm3/libopencm3
 # PATH:=/home/jmfriedt/enseignement/sqnx/platforms/stm32/qemu/qemu_stm32/arm-softmmu/:$(PATH)
 
@@ -63,11 +63,17 @@ uart_f1.o: uart_f1.c
 fact.o: fact.c fact.h
 	$(CC) $(DRAPEAU) -c fact.c
 
+fixpoint.o: fixpoint.c fixpoint.h
+	$(CC) $(DRAPEAU) -c fixpoint.c
+
 newtonsq.o: newtonsq.c
 	$(CC) $(DRAPEAU) -c newtonsq.c
 
 spi_f1.o: spi_f1.c
 	$(CC) $(DRAPEAU) -c spi_f1.c
+
+main_fix.o: main_fix.c fixpoint.h
+	$(CC) $(DRAPEAU) -c main_fix.c
 
 main_uart.o: main_uart.c
 	$(CC) $(DRAPEAU) -c main_uart.c
