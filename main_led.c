@@ -19,6 +19,7 @@ int main(){
 //		sqrt = newtonsq(num);
 //		my_puts("number = %d ",num);
 //		my_puts("sqrt %d \r\n",sqrt);
+		my_puts("qemux fixing the crystal oscillatoer bug on stm32f100 vl \r\n");
 		my_puts("fact(%d) = ",val);
 		my_puts("%d \r\n",fact(val));
 		num += 5;
