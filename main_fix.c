@@ -2,6 +2,7 @@
 #include "uart.h"
 #include "cgpio.h"
 #include "fixpoint.h"
+#include "lfsr.h"
 
 void print_fx(long a){
 	long ip = a/DECIMALES;                  // before the dot: 1048808 -> 1
@@ -28,6 +29,24 @@ void demo_fpa(void){
 	my_puts("\r\n");
 }
 
+void demo_lfsr(void){
+	static lfsr_t l;
+	static int ready = 0;
+	int i, ones = 0;
+	if (!ready){
+		lfsr_init(&l, LFSR_TAPS_16_14_13_11, LFSR_SEED);
+		ready = 1;
+	}
+	my_puts("bits  : ");
+	for (i=0; i<64; i++) my_puts("%d", lfsr_bit(&l));
+	my_puts("\r\n");
+	my_puts("words : ");
+	for (i=0; i<8; i++) my_puts("%u ", lfsr_word(&l));
+	my_puts("\r\n");
+	for (i=0; i<1024; i++) ones += lfsr_bit(&l);
+	my_puts("ones in next 1024 bits = %d\r\n\r\n", ones);
+}
+
 int main(){
 	clock_setup();
 	init_gpio();
@@ -37,6 +56,7 @@ int main(){
 		blink_led();
 
 		demo_fpa();
+		demo_lfsr();
 
 		delay(0xffffff);
 	}
