@@ -3,14 +3,29 @@
 #include "cgpio.h"
 #include "fixpoint.h"
 
-// my_puts has no %06ld: printng the 6 decimals with their leading zeros
 void print_fx(long a){
-	long f = fx_frac(a);
+	long ip = a/DECIMALES;                  // before the dot: 1048808 -> 1
+	long f  = a-ip*DECIMALES;               // after the dot:  1048808 -> 48808 (the 0 is lost)
 	long d;
-	if (a<0 && fx_int(a)==0) my_puts("-");      // -0.5 : int part is 0, sign lost
-	my_puts("%d.",(int)fx_int(a));
-	for (d=DECIMALES/10; d>1 && f<d; d/=10) my_puts("0");
+	my_puts("%d.",(int)ip);
+	for (d=DECIMALES/10; d>1 && f<d; d/=10) my_puts("0");   // one "0" per missing digit
 	my_puts("%d",(int)f);
+}
+
+void print_sqrt(char *name, long long num, long long den){
+	long res = jmsqrt(num*DECIMALES*DECIMALES/den);   // sqrt(x)*DECIMALES, radicand = x*DECIMALES^2
+	my_puts("%s = ", name);
+	print_fx(res);
+	my_puts("\r\n");
+}
+
+void demo_fpa(void){
+	print_sqrt("sqrt(2)        ", 2, 1);
+	print_sqrt("sqrt(142)      ", 142, 1);
+	print_sqrt("sqrt(1.1)      ", 11, 10);
+	print_sqrt("sqrt(4.04)     ", 404, 100);
+	print_sqrt("sqrt(1.000002) ", 1000002, 1000000);
+	my_puts("\r\n");
 }
 
 int main(){
@@ -18,26 +33,12 @@ int main(){
 	init_gpio();
 	usart_setup();
 
-	long r, c;
 	while(1){
 		blink_led();
 
-		r = jmsqrt(2*DECIMALES*DECIMALES);          // sqrt(2), expect 1.414213
-		my_puts("sqrt(2)    = "); print_fx(r); my_puts(" (1.414213)\r\n");
+		demo_fpa();
 
-		r = jmsqrt(142*DECIMALES*DECIMALES);        // expect 11.916375
-		my_puts("sqrt(142)  = "); print_fx(r); my_puts(" (11.916375)\r\n");
-
-		c = fx_div(fx_from_int(3), fx_from_int(2)); // 1.5
-		my_puts("3/2        = "); print_fx(c); my_puts("\r\n");
-
-		c = fx_mul(c,c);                            // 2.25
-		my_puts("1.5*1.5    = "); print_fx(c); my_puts("\r\n");
-
-		c = fx_sqrt(c);                             // 1.5
-		my_puts("sqrt(2.25) = "); print_fx(c); my_puts("\r\n\r\n");
-
-		delay(0xfffff);
+		delay(0xffffff);
 	}
 	return 0;
 }

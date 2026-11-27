@@ -1,7 +1,6 @@
-//fixpoint.c -- fixed point arithmetic (solution of the previous lab, J-M Friedt)
+//fixpoint.c 
 #include "fixpoint.h"
 
-// Newton: sqrt of an integer A  (solution from the lab slides)
 long jmsqrt(long long A){
 	long long x, xp;
 	if (A==0) return 0;
@@ -13,26 +12,4 @@ long jmsqrt(long long A){
 		else break;
 	} while ((x-xp)>1);
 	return (long)xp;
-}
-
-long fx_from_int(long i){ return i*DECIMALES; }
-
-long fx_mul(long a, long b){ return (long)(((long long)a*b)/DECIMALES); }
-
-long fx_div(long a, long b){
-	if (b==0) return 0;
-	return (long)(((long long)a*DECIMALES)/b);
-}
-
-// sqrt(a/D)*D = sqrt(a*D)  -> the radicand is a*D (no more than a*D^2 needed here)
-long fx_sqrt(long a){
-	if (a<=0) return 0;
-	return jmsqrt((long long)a*DECIMALES);
-}
-
-long fx_int(long a){ return a/DECIMALES; }
-
-long fx_frac(long a){
-	long f=a%DECIMALES;
-	return (f<0)?-f:f;
 }
